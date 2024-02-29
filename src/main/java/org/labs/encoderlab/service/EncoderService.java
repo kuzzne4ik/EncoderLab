@@ -11,7 +11,6 @@ public class EncoderService {
     public List<String> findEmailAddresses(String text) {
         List<String> emailAddresses = new ArrayList<>();
 
-        // Регулярное выражение для поиска email адресов
         String emailRegex = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b";
         Pattern pattern = Pattern.compile(emailRegex);
         Matcher matcher = pattern.matcher(text);
@@ -26,7 +25,6 @@ public class EncoderService {
     public List<String> findPhoneNumbers(String text) {
         List<String> phoneNumbers = new ArrayList<>();
 
-        // Регулярное выражение для поиска телефонных номеров
         String phoneRegex = "\\b\\d{3}-\\d{3}-\\d{4}\\b";
         Pattern pattern = Pattern.compile(phoneRegex);
         Matcher matcher = pattern.matcher(text);
@@ -39,11 +37,10 @@ public class EncoderService {
     }
 
     public String removeEmailAddressesAndPhoneNumbers(String text) {
-        // Удаление email адресов
+
         String emailRegex = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b";
         text = text.replaceAll(emailRegex, "");
 
-        // Удаление телефонных номеров
         String phoneRegex = "\\b\\d{3}-\\d{3}-\\d{4}\\b";
         text = text.replaceAll(phoneRegex, "");
 
