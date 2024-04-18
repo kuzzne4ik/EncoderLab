@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class EmailTypeController {
     private final CustomLogger logger;

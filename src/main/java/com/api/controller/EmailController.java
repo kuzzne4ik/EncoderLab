@@ -4,13 +4,10 @@ import com.api.component.CustomLogger;
 import com.api.dto.EmailDTO;
 import com.api.dto.MessageDTO;
 import com.api.service.EmailService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class EmailController {
     private static final String SUCCESS_MSG = "Success";
