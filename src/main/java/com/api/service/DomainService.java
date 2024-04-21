@@ -6,7 +6,7 @@ import com.api.dao.EmailRepository;
 import com.api.dao.EmailTypeRepository;
 import com.api.dto.DomainDTO;
 import com.api.entity.Email;
-import com.api.entity.EmailType;
+import com.api.entity.DomainEntity;
 import com.api.exceptions.ServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class EmailTypeService {
     @Transactional
     public void updateDomain(Long id, String newDomain) {
 
-        Optional<EmailType> emailTypeEntityOptional = emailTypeRepository.findById(id);
+        Optional<DomainEntity> emailTypeEntityOptional = emailTypeRepository.findById(id);
 
         if (emailTypeEntityOptional.isPresent() && newDomain != null && !newDomain.isEmpty() && checkDomain(newDomain)) {
             cache.remove(emailTypeEntityOptional.get().getDomain());
@@ -61,15 +61,15 @@ public class EmailTypeService {
 
     @Transactional
     public void updateDomain(String domain, String newDomain) {
-        EmailType emailType = emailTypeRepository.findByDomain(domain);
+        DomainEntity domainEntity = emailTypeRepository.findByDomain(domain);
 
-        if (emailType != null && newDomain != null && !newDomain.isEmpty() && checkDomain(newDomain)) {
-            List<Email> emails = emailType.getEmails();
+        if (domainEntity != null && newDomain != null && !newDomain.isEmpty() && checkDomain(newDomain)) {
+            List<Email> emails = domainEntity.getEmails();
             if (emails != null && !emails.isEmpty()) { // Добавлено условие проверки на null
                 customLogger.logError(EXCEPTION_MSG);
                 throw new ServiceException();
             }
-            cache.remove(emailType.getDomain());
+            cache.remove(domainEntity.getDomain());
             // Добавлена проверка на null для emails
             if (emails != null) {
                 Iterator<Email> iterator = emails.iterator();
@@ -79,9 +79,9 @@ public class EmailTypeService {
                     iterator.remove();
                 }
             }
-            emailType.setDomain(newDomain);
-            cache.put(emailType.getDomain(), emailType);
-            emailTypeRepository.save(emailType);
+            domainEntity.setDomain(newDomain);
+            cache.put(domainEntity.getDomain(), domainEntity);
+            emailTypeRepository.save(domainEntity);
         }
     }
 
@@ -99,10 +99,10 @@ public class EmailTypeService {
                 customLogger.logError("Domain was in database");
                 throw new ServiceException();
             }
-            EmailType emailType = new EmailType(domain);
-            emailTypeRepository.save(emailType);
-            cache.put(emailType.getDomain(), emailType);
-            customLogger.logCachePut(emailType.getDomain());
+            DomainEntity domainEntity = new DomainEntity(domain);
+            emailTypeRepository.save(domainEntity);
+            cache.put(domainEntity.getDomain(), domainEntity);
+            customLogger.logCachePut(domainEntity.getDomain());
         } else {
             customLogger.logInfo("Is not domain or value was in cache");
             throw new ServiceException();
@@ -111,20 +111,20 @@ public class EmailTypeService {
 
     @Transactional
     public List<DomainDTO> getDomains() {
-        List<EmailType> emailTypes = emailTypeRepository.findAll();
+        List<DomainEntity> domainEntities = emailTypeRepository.findAll();
         List<DomainDTO> result = new ArrayList<>();
-        for (int i = 0; i < emailTypes.size(); i++) {
-            cache.put(emailTypes.get(i).getDomain(), emailTypes.get(i));
-            customLogger.logCachePut(emailTypes.get(i).getDomain());
-            result.add(new DomainDTO(emailTypes.get(i).getId()
-                    + ". " + emailTypes.get(i).getDomain()));
+        for (int i = 0; i < domainEntities.size(); i++) {
+            cache.put(domainEntities.get(i).getDomain(), domainEntities.get(i));
+            customLogger.logCachePut(domainEntities.get(i).getDomain());
+            result.add(new DomainDTO(domainEntities.get(i).getId()
+                    + ". " + domainEntities.get(i).getDomain()));
         }
         return result;
     }
 
     @Transactional
     public void deleteDomain(Long id) {
-        Optional<EmailType> emailTypeEntity = emailTypeRepository.findById(id);
+        Optional<DomainEntity> emailTypeEntity = emailTypeRepository.findById(id);
         if (emailTypeEntity.isPresent()) {
             List<Email> emails = emailTypeEntity.get().getEmails();
             if (emails != null && !emails.isEmpty()) {
@@ -141,23 +141,23 @@ public class EmailTypeService {
 
     @Transactional
     public void deleteDomain(String name) {
-        Optional<EmailType> optionalEmailTypeEntity;
+        Optional<DomainEntity> optionalEmailTypeEntity;
         if (cache.get(name) != null) {
-            optionalEmailTypeEntity = (Optional<EmailType>) cache.get(name);
+            optionalEmailTypeEntity = (Optional<DomainEntity>) cache.get(name);
             customLogger.logInfo("Value from cache");
         } else {
             optionalEmailTypeEntity = Optional.ofNullable(emailTypeRepository.findByDomain(name));
         }
         if (optionalEmailTypeEntity.isPresent()) {
-            EmailType emailTypeEntity = optionalEmailTypeEntity.get();
-            List<Email> emails = emailTypeEntity.getEmails();
+            DomainEntity domainEntityEntity = optionalEmailTypeEntity.get();
+            List<Email> emails = domainEntityEntity.getEmails();
             if (emails != null && !emails.isEmpty()) {
                 customLogger.logError(EXCEPTION_MSG);
                 throw new ServiceException();
             }
-            customLogger.logCacheRemove(emailTypeEntity.getDomain());
-            emailTypeRepository.delete(emailTypeEntity);
-            cache.remove(emailTypeEntity.getDomain());
+            customLogger.logCacheRemove(domainEntityEntity.getDomain());
+            emailTypeRepository.delete(domainEntityEntity);
+            cache.remove(domainEntityEntity.getDomain());
         } else {
             throw new ServiceException();
         }
