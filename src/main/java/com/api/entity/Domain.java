@@ -6,7 +6,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "email_type")
-public class EmailType {
+public class Domain {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -15,22 +15,22 @@ public class EmailType {
     @Column(name = "domain")
     private String domain;
 
-    @OneToMany(mappedBy = "typeEmail", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "typeEmail", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<Email> emails;
 
-    public EmailType(String domain) {
+    public Domain(String domain) {
         this.domain = domain;
     }
 
-    public EmailType() {
+    public Domain() {
     }
 
-    public EmailType(String domain, List<Email> emails) {
+    public Domain(String domain, List<Email> emails) {
         this.domain = domain;
         this.emails = emails;
     }
 
-    public EmailType(Long id, String domain) {
+    public Domain(Long id, String domain) {
         this.id = id;
         this.domain = domain;
     }

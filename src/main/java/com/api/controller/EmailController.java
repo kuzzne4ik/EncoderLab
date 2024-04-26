@@ -31,9 +31,8 @@ public class EmailController {
     }
 
     @GetMapping("/getEmails")
-    public ResponseEntity<List<EmailDTO>> getEmails(@RequestParam String text) {
-        logger.logInfo("GET : getEmails");
-        List<EmailDTO> emailList = service.getEmails(text);
+    public ResponseEntity<List<String>> getEmails(@RequestParam String text) {
+        List<String> emailList = service.getEmails(text);
         return ResponseEntity.ok(emailList);
     }
 

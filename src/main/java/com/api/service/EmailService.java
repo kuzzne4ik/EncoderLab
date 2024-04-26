@@ -3,10 +3,10 @@ package com.api.service;
 import com.api.component.Cache;
 import com.api.component.CustomLogger;
 import com.api.dao.EmailRepository;
-import com.api.dao.EmailTypeRepository;
+import com.api.dao.DomainRepository;
 import com.api.dto.EmailDTO;
 import com.api.entity.Email;
-import com.api.entity.EmailType;
+import com.api.entity.Domain;
 import com.api.exceptions.ServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -24,13 +24,13 @@ public class EmailService {
     private final Cache cache;
     private static final String EMAIL_REGEX = "\\b[a-z0-9._-]+@[a-z0-9.-]+\\.[a-z]{2,}\\b";
     private static String adresRegex = "[a-z0-9.-]+\\.[a-z]{2,}\\b";
-    private final EmailTypeRepository emailTypeRepository;
+    private final DomainRepository domainRepository;
 
-    public EmailService(CustomLogger customLogger, EmailRepository emailRepository, Cache cache, EmailTypeRepository emailTypeRepository) {
+    public EmailService(CustomLogger customLogger, EmailRepository emailRepository, Cache cache, DomainRepository domainRepository) {
         this.customLogger = customLogger;
         this.emailRepository = emailRepository;
         this.cache = cache;
-        this.emailTypeRepository = emailTypeRepository;
+        this.domainRepository = domainRepository;
     }
 
     @Transactional
@@ -79,18 +79,18 @@ public class EmailService {
             adresMatcher = adresPattern.matcher(newEmail);
             if (adresMatcher.find()) {
                 String domain = adresMatcher.group(0);
-                EmailType emailType = emailTypeRepository.findByDomain(domain);
-                if (emailType != null) {
+                Domain domainEntity = domainRepository.findByDomain(domain);
+                if (domainEntity != null) {
                     cache.remove(emailEntity.get().getEmail());
                     cache.put(newEmail, new Email(newEmail));
                     emailEntity.get().setEmail(newEmail);
-                    emailEntity.get().setEmailTypeEntity(emailType);
+                    emailEntity.get().setEmailTypeEntity(domainEntity);
                 } else {
-                    emailType = new EmailType(domain);
-                    emailTypeRepository.save(emailType);
+                    domainEntity = new Domain(domain);
+                    domainRepository.save(domainEntity);
                     emailEntity.get().setEmail(newEmail);
-                    emailEntity.get().setEmailTypeEntity(emailType);
-                    cache.put(emailType.getDomain(), emailType);
+                    emailEntity.get().setEmailTypeEntity(domainEntity);
+                    cache.put(domainEntity.getDomain(), domainEntity);
                 }
             }
         } else {
@@ -113,22 +113,22 @@ public class EmailService {
             adresMatcher = adresPattern.matcher(newEmail);
             if (adresMatcher.find()) {
                 String domain = adresMatcher.group(0);
-                EmailType emailType = emailTypeRepository.findByDomain(domain);
-                if (emailType != null) {
+                Domain domainEntity = domainRepository.findByDomain(domain);
+                if (domainEntity != null) {
                     cache.remove(emailEntity.getEmail());
                     cache.put(newEmail, new Email(newEmail));
                     emailEntity.setEmail(newEmail);
-                    emailEntity.setEmailTypeEntity(emailType);
-                    customLogger.logCachePut(emailType.getDomain());
+                    emailEntity.setEmailTypeEntity(domainEntity);
+                    customLogger.logCachePut(domainEntity.getDomain());
 
                 } else {
-                    emailType = new EmailType(domain);
-                    emailTypeRepository.save(emailType);
+                    domainEntity = new Domain(domain);
+                    domainRepository.save(domainEntity);
                     emailEntity.setEmail(newEmail);
-                    emailEntity.setEmailTypeEntity(emailType);
-                    cache.put(emailType.getDomain(), emailType);
+                    emailEntity.setEmailTypeEntity(domainEntity);
+                    cache.put(domainEntity.getDomain(), domainEntity);
                     cache.put(emailEntity.getEmail(), emailEntity);
-                    customLogger.logCachePut(emailType.getDomain());
+                    customLogger.logCachePut(domainEntity.getDomain());
                     customLogger.logCachePut(emailEntity.getEmail());
                 }
             }
@@ -138,19 +138,16 @@ public class EmailService {
     }
 
     @Transactional
-    public List<EmailDTO> getEmails(String text) {
-        List<EmailDTO> strings = new ArrayList<>();
+    public List<String> getEmails(String text) {
+        List<String> strings = new ArrayList<>();
         List<Email> emailEntities;
         if (text.equals("all")) {
             emailEntities = emailRepository.findAll();
-            for (int i = 0; i < emailEntities.size(); i++) {
-                customLogger.logCachePut(emailEntities.get(i).getEmail());
-                cache.put(emailEntities.get(i).getEmail(), emailEntities.get(i));
-                strings.add(new EmailDTO(emailEntities.get(i).getEmail(), i));
-            }
         } else {
-            customLogger.logError("Wrong arguments");
             throw new ServiceException();
+        }
+        for (int i = 0; i < emailEntities.size(); i++) {
+            strings.add(emailEntities.get(i).getId().toString() + ". " + emailEntities.get(i).getEmail());
         }
         return strings;
     }
@@ -194,21 +191,21 @@ public class EmailService {
             if (adresMatcher.find()) {
 
                 String domain = adresMatcher.group();
-                EmailType findEntity = emailTypeRepository.findByDomain(domain);
+                Domain findEntity = domainRepository.findByDomain(domain);
                 if (emailRepository.findByName(email) != null) {
                     continue;
                 }
                 if (findEntity == null) {
-                    EmailType emailType = new EmailType(domain);
+                    Domain domainEntity = new Domain(domain);
 
-                    emailTypeRepository.save(emailType);
+                    domainRepository.save(domainEntity);
 
-                    Email emailEntity = new Email(email, emailType);
+                    Email emailEntity = new Email(email, domainEntity);
                     emailRepository.save(emailEntity);
                     cache.put(emailEntity.getEmail(), emailEntity);
-                    cache.put(emailType.getDomain(), emailType);
+                    cache.put(domainEntity.getDomain(), domainEntity);
                     customLogger.logCachePut(emailEntity.getEmail());
-                    customLogger.logCachePut(emailType.getDomain());
+                    customLogger.logCachePut(domainEntity.getDomain());
 
                 } else {
                     Email emailEntity = new Email(email, findEntity);

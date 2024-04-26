@@ -7,6 +7,7 @@ import java.util.Map;
 
 @Component
 public class Cache {
+
     private Map<String, Object> hashMap;
 
     public Cache() {

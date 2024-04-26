@@ -3,10 +3,10 @@ package com.api.service;
 import com.api.component.Cache;
 import com.api.component.CustomLogger;
 import com.api.dao.EmailRepository;
-import com.api.dao.EmailTypeRepository;
+import com.api.dao.DomainRepository;
 import com.api.dto.DomainDTO;
 import com.api.entity.Email;
-import com.api.entity.DomainEntity;
+import com.api.entity.Domain;
 import com.api.exceptions.ServiceException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -19,24 +19,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public class EmailTypeService {
+public class DomainService {
     private final EmailRepository emailRepository;
     private static final String EXCEPTION_MSG = "Domain has slave emails";
     private final Cache cache;
     private final CustomLogger customLogger;
-    private final EmailTypeRepository emailTypeRepository;
+    private final DomainRepository domainRepository;
 
-    public EmailTypeService(EmailRepository emailRepository, Cache cache, CustomLogger customLogger, EmailTypeRepository emailTypeRepository) {
+    public DomainService(EmailRepository emailRepository, Cache cache, CustomLogger customLogger, DomainRepository domainRepository) {
         this.emailRepository = emailRepository;
         this.cache = cache;
         this.customLogger = customLogger;
-        this.emailTypeRepository = emailTypeRepository;
+        this.domainRepository = domainRepository;
     }
 
     @Transactional
     public void updateDomain(Long id, String newDomain) {
 
-        Optional<DomainEntity> emailTypeEntityOptional = emailTypeRepository.findById(id);
+        Optional<Domain> emailTypeEntityOptional = domainRepository.findById(id);
 
         if (emailTypeEntityOptional.isPresent() && newDomain != null && !newDomain.isEmpty() && checkDomain(newDomain)) {
             cache.remove(emailTypeEntityOptional.get().getDomain());
@@ -54,14 +54,14 @@ public class EmailTypeService {
 
             emailTypeEntityOptional.get().setDomain(newDomain);
             customLogger.logCachePut(emailTypeEntityOptional.get().getDomain());
-            emailTypeRepository.save(emailTypeEntityOptional.get());
+            domainRepository.save(emailTypeEntityOptional.get());
         }
 
     }
 
     @Transactional
     public void updateDomain(String domain, String newDomain) {
-        DomainEntity domainEntity = emailTypeRepository.findByDomain(domain);
+        Domain domainEntity = domainRepository.findByDomain(domain);
 
         if (domainEntity != null && newDomain != null && !newDomain.isEmpty() && checkDomain(newDomain)) {
             List<Email> emails = domainEntity.getEmails();
@@ -81,7 +81,7 @@ public class EmailTypeService {
             }
             domainEntity.setDomain(newDomain);
             cache.put(domainEntity.getDomain(), domainEntity);
-            emailTypeRepository.save(domainEntity);
+            domainRepository.save(domainEntity);
         }
     }
 
@@ -95,12 +95,12 @@ public class EmailTypeService {
     @Transactional
     public void addDomain(String domain) {
         if (checkDomain(domain) && cache.get(domain) == null) {
-            if (emailTypeRepository.findByDomain(domain) != null) {
+            if (domainRepository.findByDomain(domain) != null) {
                 customLogger.logError("Domain was in database");
                 throw new ServiceException();
             }
-            DomainEntity domainEntity = new DomainEntity(domain);
-            emailTypeRepository.save(domainEntity);
+            Domain domainEntity = new Domain(domain);
+            domainRepository.save(domainEntity);
             cache.put(domainEntity.getDomain(), domainEntity);
             customLogger.logCachePut(domainEntity.getDomain());
         } else {
@@ -111,7 +111,7 @@ public class EmailTypeService {
 
     @Transactional
     public List<DomainDTO> getDomains() {
-        List<DomainEntity> domainEntities = emailTypeRepository.findAll();
+        List<Domain> domainEntities = domainRepository.findAll();
         List<DomainDTO> result = new ArrayList<>();
         for (int i = 0; i < domainEntities.size(); i++) {
             cache.put(domainEntities.get(i).getDomain(), domainEntities.get(i));
@@ -124,14 +124,10 @@ public class EmailTypeService {
 
     @Transactional
     public void deleteDomain(Long id) {
-        Optional<DomainEntity> emailTypeEntity = emailTypeRepository.findById(id);
+        Optional<Domain> emailTypeEntity = domainRepository.findById(id);
         if (emailTypeEntity.isPresent()) {
             List<Email> emails = emailTypeEntity.get().getEmails();
-            if (emails != null && !emails.isEmpty()) {
-                customLogger.logError(EXCEPTION_MSG);
-                throw new ServiceException();
-            }
-            emailTypeRepository.delete(emailTypeEntity.get());
+            domainRepository.delete(emailTypeEntity.get());
             cache.remove(emailTypeEntity.get().getDomain());
             customLogger.logCacheRemove(emailTypeEntity.get().getDomain());
         } else {
@@ -141,23 +137,19 @@ public class EmailTypeService {
 
     @Transactional
     public void deleteDomain(String name) {
-        Optional<DomainEntity> optionalEmailTypeEntity;
+        Optional<Domain> optionalEmailTypeEntity;
         if (cache.get(name) != null) {
-            optionalEmailTypeEntity = (Optional<DomainEntity>) cache.get(name);
+            optionalEmailTypeEntity = (Optional<Domain>) cache.get(name);
             customLogger.logInfo("Value from cache");
         } else {
-            optionalEmailTypeEntity = Optional.ofNullable(emailTypeRepository.findByDomain(name));
+            optionalEmailTypeEntity = Optional.ofNullable(domainRepository.findByDomain(name));
         }
         if (optionalEmailTypeEntity.isPresent()) {
-            DomainEntity domainEntityEntity = optionalEmailTypeEntity.get();
-            List<Email> emails = domainEntityEntity.getEmails();
-            if (emails != null && !emails.isEmpty()) {
-                customLogger.logError(EXCEPTION_MSG);
-                throw new ServiceException();
-            }
-            customLogger.logCacheRemove(domainEntityEntity.getDomain());
-            emailTypeRepository.delete(domainEntityEntity);
-            cache.remove(domainEntityEntity.getDomain());
+            Domain domainEntity = optionalEmailTypeEntity.get();
+            List<Email> emails = domainEntity.getEmails();
+            customLogger.logCacheRemove(domainEntity.getDomain());
+            domainRepository.delete(domainEntity);
+            cache.remove(domainEntity.getDomain());
         } else {
             throw new ServiceException();
         }

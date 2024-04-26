@@ -3,7 +3,7 @@ package com.api.controller;
 import com.api.component.CustomLogger;
 import com.api.dto.DomainDTO;
 import com.api.dto.MessageDTO;
-import com.api.service.EmailTypeService;
+import com.api.service.DomainService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,12 +12,12 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
-public class EmailTypeController {
+public class DomainController {
     private final CustomLogger logger;
     private static final String SUCCESS_MSG = "Success";
-    private final EmailTypeService service;
+    private final DomainService service;
 
-    public EmailTypeController(CustomLogger logger, EmailTypeService service) {
+    public DomainController(CustomLogger logger, DomainService service) {
         this.logger = logger;
         this.service = service;
     }

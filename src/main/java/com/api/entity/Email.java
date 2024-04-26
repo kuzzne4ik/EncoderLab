@@ -16,11 +16,13 @@ public class Email {
 
     @ManyToOne
     @JoinColumn(name = "type_email_id", nullable = false)
-    private EmailType typeEmail;
 
-    public Email(String email, EmailType emailType) {
+
+    private Domain typeEmail;
+
+    public Email(String email, Domain domain) {
         this.name = email;
-        this.typeEmail = emailType;
+        this.typeEmail = domain;
     }
 
     public Email(Long id, String email) {
@@ -51,12 +53,12 @@ public class Email {
         this.name = email;
     }
 
-    public EmailType getEmailTypeEntity() {
+    public Domain getEmailTypeEntity() {
         return typeEmail;
     }
 
-    public void setEmailTypeEntity(EmailType emailType) {
-        this.typeEmail = emailType;
+    public void setEmailTypeEntity(Domain domain) {
+        this.typeEmail = domain;
     }
 }
 
