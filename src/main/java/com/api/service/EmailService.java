@@ -94,16 +94,26 @@ public class EmailService {
 
     @Transactional
     public void deleteEmail(String email) {
-        Email emailEntity = emailRepository.findByName(email);
-        if (emailEntity != null) {
+        Optional<Email> optionalEmail;
+        if (cache.get(email) != null) {
+            optionalEmail = (Optional<Email>) cache.get(email);
+            customLogger.logInfo("Value from cache");
+        } else {
+            optionalEmail = Optional.ofNullable(emailRepository.findByName(email));
+        }
+        if (optionalEmail.isPresent()) {
+            Email emailEntity = optionalEmail.get();
+
+            // Удаляем электронную почту из кэша только если она была найдена
+            cache.remove(emailEntity.getEmail());
             customLogger.logCacheRemove(emailEntity.getEmail());
             // Удаляем электронную почту из репозитория
             emailRepository.delete(emailEntity);
+
         } else {
             customLogger.logError("Email is not found");
             throw new ServiceException();
         }
-
     }
 
     @Transactional

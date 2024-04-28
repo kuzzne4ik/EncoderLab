@@ -231,6 +231,9 @@ class EmailServiceTest {
         Email emailEntity = new Email(email);
 
         when(cache.get(email)).thenReturn(Optional.of(emailEntity));
+        emailService.deleteEmail(email);
+
+        verify(cache).remove(email);
     }
 
     @Test
