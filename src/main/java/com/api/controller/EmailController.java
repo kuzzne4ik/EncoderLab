@@ -4,6 +4,7 @@ import com.api.component.CustomLogger;
 import com.api.dto.EmailDTO;
 import com.api.dto.MessageDTO;
 import com.api.service.EmailService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +20,12 @@ public class EmailController {
         this.service = service;
     }
 
+    @PostMapping("/add")
+    public ResponseEntity<MessageDTO> add(@RequestBody List<EmailDTO> email) {
+        service.addEmails(email);
+        return new ResponseEntity<>(new MessageDTO("all ok"), HttpStatus.OK);
+    }
+
     @PostMapping("/processUrl")
     public ResponseEntity<MessageDTO> processUrl(@RequestParam String text) {
         logger.logInfo("POST : processUrl");
@@ -32,6 +39,7 @@ public class EmailController {
 
     @GetMapping("/getEmails")
     public ResponseEntity<List<String>> getEmails(@RequestParam String text) {
+        logger.logInfo("GET : getEmails");
         List<String> emailList = service.getEmails(text);
         return ResponseEntity.ok(emailList);
     }

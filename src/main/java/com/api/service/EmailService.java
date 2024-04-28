@@ -34,6 +34,49 @@ public class EmailService {
     }
 
     @Transactional
+    public void addEmails(List<EmailDTO> list) {
+        list.stream()
+                .forEach(this::putEmail);
+    }
+
+    @Transactional
+    protected void putEmail(EmailDTO emailDTO) {
+        Pattern emailPattern = Pattern.compile(EMAIL_REGEX, Pattern.CASE_INSENSITIVE);
+        Matcher emailMatcher = emailPattern.matcher(emailDTO.getText());
+        if (!emailMatcher.find()) {
+            throw new ServiceException();
+        } else {
+            Email existingEmail = emailRepository.findByName(emailDTO.getText());
+            if (existingEmail == null) {
+                Email newEmail = new Email();
+                newEmail.setEmail(emailDTO.getText());
+                Domain emailType = createOrRetrieveEmailType(emailDTO.getText());
+                newEmail.setEmailTypeEntity(emailType);
+                emailRepository.save(newEmail);
+            } else {
+                customLogger.logInfo("Email " + emailDTO.getText() + " already exists in the database");
+                throw new ServiceException();
+            }
+        }
+    }
+
+    @Transactional
+    protected Domain createOrRetrieveEmailType(String email) {
+        String domain = email.substring(email.indexOf('@') + 1);
+        Domain emailType = (Domain) cache.get(domain);
+        if (emailType == null) {
+            emailType = domainRepository.findByDomain(domain);
+            if (emailType == null) {
+                emailType = new Domain();
+                emailType.setDomain(domain);
+                domainRepository.save(emailType);
+            }
+            cache.put(domain, emailType);
+        }
+        return emailType;
+    }
+
+    @Transactional
     public void deleteEmail(Long id) {
         Optional<Email> optionalEmail = emailRepository.findById(id);
 
