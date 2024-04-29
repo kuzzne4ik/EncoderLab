@@ -126,7 +126,6 @@ public class DomainService {
     public void deleteDomain(Long id) {
         Optional<Domain> emailTypeEntity = domainRepository.findById(id);
         if (emailTypeEntity.isPresent()) {
-            List<Email> emails = emailTypeEntity.get().getEmails();
             domainRepository.delete(emailTypeEntity.get());
             cache.remove(emailTypeEntity.get().getDomain());
             customLogger.logCacheRemove(emailTypeEntity.get().getDomain());
@@ -146,7 +145,6 @@ public class DomainService {
         }
         if (optionalEmailTypeEntity.isPresent()) {
             Domain domainEntity = optionalEmailTypeEntity.get();
-            List<Email> emails = domainEntity.getEmails();
             customLogger.logCacheRemove(domainEntity.getDomain());
             domainRepository.delete(domainEntity);
             cache.remove(domainEntity.getDomain());
